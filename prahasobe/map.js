@@ -221,7 +221,7 @@ function styleRatio(feature) {
     color: 'white',
     dashArray: '',
     fillOpacity: 0.6,
-    fillColor: getRatioColor(feature.properties.ratios, feature.properties.strany)
+    fillColor: getRatioColor(feature.properties.ratios, partylist)
   };
 }
 
