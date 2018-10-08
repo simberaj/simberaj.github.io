@@ -17,9 +17,9 @@ var partyResults = {
     "KSČM" : 3.26,
     "Spojené Síly" : 16.29,
     "ODS" : 17.87,
-    "PRAHA SOBĚ" : 6.88,
-    "Zelení" : 3.19,
-    "Piráti" : 2.66,
-    "SPD" : 2.46,
-    "StaPP" : 1.51
+    "PRAHA SOBĚ" : 16.57,
+    "Zelení" : 1.84,
+    "Piráti" : 17.07,
+    "SPD" : 3.54,
+    "StaPP" : 1.92
 };
