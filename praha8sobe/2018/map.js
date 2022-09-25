@@ -1,6 +1,25 @@
 // var map = L.map('map').setView([49.75, 15.25], 8)
-var map = L.map('map').setView([50.05, 14.45], 12);
+var map = L.map('map').setView([50.115, 14.45], 14);
 
+
+var partylist = [
+    'ANO',
+    'ČSSD',
+    'Patrioti',
+    'ODS',
+    'Piráti',
+    '8žije',
+    'SPD',
+    'StaPP',
+    'TOP 09 a STAN',
+    'Osmička sobě',
+    'SOS',
+    'KSČM',
+];
+
+// TODOS
+// test geolocation
+// party color not found: sanitize
 
 maxWidth = window.innerWidth / 4;
 
@@ -32,19 +51,23 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   // id: 'examples.map-20v6611k'
 }).addTo(map);
 
-
 // pre-calculation of some values
 for (var i = 0; i < data.features.length; i++) {
   props = data.features[i].properties;
   // props.ucast = props.plathl / props.volicu * 100;
-  total_hl = 0;
-  for (var j = 0; j < partylist.length; j++) {
-    total_hl += props[partylist[j]];
-  }
   props.ratios = [];
-  for (var j = 0; j < partylist.length; j++) {
-    props.ratios.push(props[partylist[j]] / total_hl * 100);
+  maxVotes = 0;
+  maxParty = null;
+  for (var j = 0; j < props.hlasy.length; j++) {
+    props.ratios.push(props.hlasy[j] / props.plathl * 100);
+    if (props.hlasy[j] > maxVotes) {
+      maxVotes = props.hlasy[j];
+      maxParty = partylist[j];
+    } else if (props.hlasy[j] == maxVotes) {
+      maxParty = null;
+    }
   }
+  props.winner = maxParty;
 }
 
 function rgbToArr(rgb) {
@@ -66,26 +89,20 @@ for (var party in partyColors) {
 var info = L.control();
 
 function getBasicInfo(props) {
-  return '<table><tr><td colspan="3"><b>MČ ' + props.mc + '</b><br>okrsek ' + props.okrsek + '</tr>';
+  return '<table><tr><td colspan="3"><b>' + props.obec + '</b><br>okrsek ' + props.cislo + '</tr>';
 }
 
 function getFullInfo(props) {
+  var rows = [];
   var sorted = [];
-  var maxValue = 0;
-  for (var i = 0; i < props.ratios.length; i++) {
+  for (var i = 0; i < props.hlasy.length; i++) {
     if (props.ratios[i] > 1) {
-      sorted.push([partylist[i], props[partylist[i]], props.ratios[i], partyLabels[partylist[i]]]);
-    }
-    if (props.ratios[i] > maxValue) {
-      maxValue = props.ratios[i];
+      sorted.push([partylist[i], props.hlasy[i], props.ratios[i]]);
     }
   }
   sorted.sort(sortVotes);
-  var rows = [
-    '<tr><td>Účast</td><td> <i style="background:#8c96c6; width:' + (maxWidth * maxValue * props.ucast / 100).toFixed(0) + 'px"></i></td><td class="minor">' + props.hlasovalo + '/' + props.volicu + ' (' + (props.ucast * 100).toFixed(1) + ' %)</td></tr>'
-  ];
   for (var i = 0; i < sorted.length; i++) {
-    rows.push('<tr><td>' + sorted[i][3] + '</td><td> <i style="background:' + getPartyColor(sorted[i][0]) + '; width:' + (maxWidth * sorted[i][2] / 100).toFixed(0) + 'px"></i></td><td class="minor">' + sorted[i][1] + ' (' + sorted[i][2].toFixed(1) + ' %)</td></tr>');
+    rows.push('<tr><td>' + sorted[i][0] + '</td><td> <i style="background:' + getPartyColor(sorted[i][0]) + '; width:' + (maxWidth * sorted[i][2] / 100).toFixed(0) + 'px"></i></td><td class="minor">' + sorted[i][1] + ' (' + sorted[i][2].toFixed(1) + ' %)</td></tr>');
     //  + ' % vs. ' + partyResults[sorted[i][0]].toFixed(1) - celostatni vysledek
   }
   return rows.join('') + '</table><span class="bottomnote">(zobrazeny jen strany se ziskem &gt; 1 %)</span>';
@@ -116,25 +133,25 @@ info.update = function (props, full) {
   } else {
     cont = 'Najeď nad okrsek';
   }
-  this._div.innerHTML = '<h4>Volby do Zastupitelstva MČ Praha 8 2022</h4>' + cont;
+  this._div.innerHTML = '<h4>Volby do Zastupitelstva MČ Prahy 8 2018</h4>' + cont;
 };
 
 info.addTo(map);
 
 
 // // get color depending on population density value
-function getUcastColor(d) {
-  // grades = [0, 10, 20, 30, 40, 50, 60, 80, 100]
-  return d > 100 ? '#4d004b' :
-         d > 80  ? '#810f7c' :
-         d > 60  ? '#88419d' :
-         d > 50  ? '#8c6bb1' :
-         d > 40   ? '#8c96c6' :
-         d > 30   ? '#9ebcda' :
-         d > 20   ? '#bfd3e6' :
-         d > 10   ? '#e0ecf4' :
-                    '#f7fcfd';
-}
+// function getUcastColor(d) {
+  // // grades = [0, 10, 20, 30, 40, 50, 60, 80, 100]
+  // return d > 100 ? '#4d004b' :
+         // d > 80  ? '#810f7c' :
+         // d > 60  ? '#88419d' :
+         // d > 50  ? '#8c6bb1' :
+         // d > 40   ? '#8c96c6' :
+         // d > 30   ? '#9ebcda' :
+         // d > 20   ? '#bfd3e6' :
+         // d > 10   ? '#e0ecf4' :
+                    // '#f7fcfd';
+// }
 
 function getPartyColor(p) {
   if (p) {
@@ -161,7 +178,7 @@ function getRatioColor(ratios, parties) {
       return '#ffffff';
     } else {
       partyColor = partyColorTuples[currentParty];
-      partyOverallRatio = partyResults[currentParty] * 100;
+      partyOverallRatio = partyResults[currentParty];
       if (!partyColor) {
         partyColor = [217,182,138];
       }
@@ -199,16 +216,16 @@ function styleWinner(feature) {
   };
 }
 
-function styleUcast(feature) {
-  return {
-    weight: 1,
-    opacity: 1,
-    color: 'white',
-    dashArray: '',
-    fillOpacity: 0.6,
-    fillColor: getUcastColor(feature.properties.ucast * 100)
-  };
-}
+// function styleUcast(feature) {
+  // return {
+    // weight: 1,
+    // opacity: 1,
+    // color: 'white',
+    // dashArray: '',
+    // fillOpacity: 0.6,
+    // fillColor: getUcastColor(feature.properties.ucast)
+  // };
+// }
 
 function styleRatio(feature) {
   return {
@@ -270,27 +287,27 @@ geojson = L.geoJson(data, {
 }).addTo(map);
 
 
-var ucastlegend = L.control({position: 'bottomleft'});
+// var ucastlegend = L.control({position: 'bottomleft'});
 
-ucastlegend.onAdd = function (map) {
+// ucastlegend.onAdd = function (map) {
 
-  var div = L.DomUtil.create('div', 'info legend ucastlegend'),
-    grades = [0, 10, 20, 30, 40, 50, 60, 80, 100],
-    labels = [],
-    from, to;
+  // var div = L.DomUtil.create('div', 'info legend ucastlegend'),
+    // grades = [0, 10, 20, 30, 40, 50, 60, 80, 100],
+    // labels = [],
+    // from, to;
 
-  for (var i = 0; i < grades.length; i++) {
-    from = grades[i];
-    to = grades[i + 1];
+  // for (var i = 0; i < grades.length; i++) {
+    // from = grades[i];
+    // to = grades[i + 1];
 
-    labels.push(
-      '<i style="background:' + getUcastColor(from + 1) + '"></i> ' +
-      from + (to ? '&ndash;' + to : '+') + ' %');
-  }
+    // labels.push(
+      // '<i style="background:' + getUcastColor(from + 1) + '"></i> ' +
+      // from + (to ? '&ndash;' + to : '+') + ' %');
+  // }
 
-  div.innerHTML = '<h4>Volební účast</h4>' + labels.join('<br>');
-  return div;
-};
+  // div.innerHTML = '<h4>Volební účast</h4>' + labels.join('<br>');
+  // return div;
+// };
 
 // ucastlegend.addTo(map);
 
@@ -304,7 +321,7 @@ partylegend.onAdd = function (map) {
   for (party in partyColors) {
     labels.push(
       '<i style="background:' + getPartyColor(party) + '"></i> ' +
-      partyLabels[party] + ' <span class="minor">(' + (partyResults[party] * 100).toFixed(1) + ' %)</span>');
+      party + ' <span class="minor">(' + partyResults[party] + ' %)</span>');
   }
   labels.push('<i style="background:' + getPartyColor('whatever') + '"></i> jiná strana');
   labels.push('<i style="background:' + getPartyColor(null) + '"></i> remíza</span>');
@@ -318,25 +335,25 @@ var currentlegend = partylegend;
 currentlegend.addTo(map);
 
 var topStyles = {
-  "Vítězové" : "winners",
-  "Účast" : "ucast"
+  "Vítězové" : "winners"
+  // "Účast" : "ucast"
 };
 
 var bottomStyles = {};
 
 var styleFunctions = {
-  "winners" : styleWinner,
-  "ucast" : styleUcast
+  "winners" : styleWinner
+  // "ucast" : styleUcast
 };
 
 var styleLegends = {
-  "winners" : partylegend,
-  "ucast" : ucastlegend
+  "winners" : partylegend
+  // "ucast" : ucastlegend
 };
 
 
 for (var party in partyColors) {
-  bottomStyles[partyLabels[party]] = party;
+  bottomStyles[party] = party;
   styleFunctions[party] = styleRatio;
   styleLegends[party] = L.control({position: 'bottomleft'});
   styleLegends[party].onAdd = function (map) {
@@ -346,12 +363,12 @@ for (var party in partyColors) {
 
     for (var i = 0; i < grades.length; i++) {
       labels.push(
-        '<i style="background:' + colorByRatio(partyColorTuples[currentParty], 1 / grades[i]) + '"></i> ' + (partyResults[currentParty] * 100 * grades[i]).toFixed(1) + ' % <span class="minor">(' +
+        '<i style="background:' + colorByRatio(partyColorTuples[currentParty], 1 / grades[i]) + '"></i> ' + (partyResults[currentParty] * grades[i]).toFixed(1) + ' % <span class="minor">(' +
         grades[i] * 100 + ' % prům.)</span>');
         // from + (to ? '&ndash;' + to : '+') + ' %');
     }
     labels.push('<span class="minor">(stupnice je plynulá)</span>');
-    div.innerHTML = '<h4>Výsledek strany ' + partyLabels[currentParty] + '</h4>' + labels.join('<br>');
+    div.innerHTML = '<h4>Výsledek strany ' + currentParty + '</h4>' + labels.join('<br>');
     return div;
   };
 }

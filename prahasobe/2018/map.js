@@ -116,7 +116,7 @@ info.update = function (props, full) {
   } else {
     cont = 'Najeď nad okrsek';
   }
-  this._div.innerHTML = '<h4>Volby do Zastupitelstva MČ Praha 8 2022</h4>' + cont;
+  this._div.innerHTML = '<h4>Volby do Zastupitelstva hl. m. Prahy 2018</h4>' + cont;
 };
 
 info.addTo(map);
