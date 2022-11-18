@@ -81,13 +81,13 @@ function getFullInfo(props) {
     }
   }
   sorted.sort(sortVotes);
-  var rows = [
-    '<tr><td>Účast</td><td> <i style="background:#8c96c6; width:' + (maxWidth * maxValue * props.ucast / 100).toFixed(0) + 'px"></i></td><td class="minor">' + props.hlasovalo + '/' + props.volicu + ' (' + (props.ucast * 100).toFixed(1) + ' %)</td></tr>'
-  ];
+  var rows = [];
   for (var i = 0; i < sorted.length; i++) {
     rows.push('<tr><td>' + sorted[i][3] + '</td><td> <i style="background:' + getPartyColor(sorted[i][0]) + '; width:' + (maxWidth * sorted[i][2] / 100).toFixed(0) + 'px"></i></td><td class="minor">' + sorted[i][1] + ' (' + sorted[i][2].toFixed(1) + ' %)</td></tr>');
     //  + ' % vs. ' + partyResults[sorted[i][0]].toFixed(1) - celostatni vysledek
   }
+  rows.push('<tr><td>Podpisů</td><td> <i style="background:rgb(212,196,77); width:' + (maxWidth * props.podil_podpisu).toFixed(0) + 'px"></i></td><td class="minor">' + props.podpisu + '/' + props.volicu + ' (' + (props.podil_podpisu * 100).toFixed(1) + ' %)</td></tr>');
+  rows.push('<tr><td>Účast</td><td> <i style="background:#8c96c6; width:' + (maxWidth * maxValue * props.ucast / 100).toFixed(0) + 'px"></i></td><td class="minor">' + props.hlasovalo + '/' + props.volicu + ' (' + (props.ucast * 100).toFixed(1) + ' %)</td></tr>');
   return rows.join('') + '</table><span class="bottomnote">(zobrazeny jen strany se ziskem &gt; 1 %)</span>';
 }
 
@@ -116,7 +116,7 @@ info.update = function (props, full) {
   } else {
     cont = 'Najeď nad okrsek';
   }
-  this._div.innerHTML = '<h4>Volby do Zastupitelstva hl. m. Prahy 2018</h4>' + cont;
+  this._div.innerHTML = '<h4>Volby do Zastupitelstva hl. m. Prahy 2022</h4>' + cont;
 };
 
 info.addTo(map);
@@ -129,11 +129,24 @@ function getUcastColor(d) {
          d > 80  ? '#810f7c' :
          d > 60  ? '#88419d' :
          d > 50  ? '#8c6bb1' :
-         d > 40   ? '#8c96c6' :
-         d > 30   ? '#9ebcda' :
-         d > 20   ? '#bfd3e6' :
-         d > 10   ? '#e0ecf4' :
-                    '#f7fcfd';
+         d > 40  ? '#8c96c6' :
+         d > 30  ? '#9ebcda' :
+         d > 20  ? '#bfd3e6' :
+         d > 10  ? '#e0ecf4' :
+                   '#f7fcfd';
+}
+
+function getPodpisyColor(d) {
+  // grades = [0, 10, 20, 30, 40, 50, 60, 80, 100]
+  return d > 0.2   ? '#662506' :
+         d > 0.15  ? '#993404' :
+         d > 0.12  ? '#cc4c02' :
+         d > 0.1   ? '#ec7014' :
+         d > 0.08  ? '#fe9929' :
+         d > 0.06  ? '#fec44f' :
+         d > 0.04  ? '#fee391' :
+         d > 0.02  ? '#fff7bc' :
+                     '#ffffe5';
 }
 
 function getPartyColor(p) {
@@ -207,6 +220,17 @@ function styleUcast(feature) {
     dashArray: '',
     fillOpacity: 0.6,
     fillColor: getUcastColor(feature.properties.ucast * 100)
+  };
+}
+
+function stylePodpisy(feature) {
+  return {
+    weight: 1,
+    opacity: 1,
+    color: 'white',
+    dashArray: '',
+    fillOpacity: 0.6,
+    fillColor: getPodpisyColor(feature.properties.podil_podpisu)
   };
 }
 
@@ -292,6 +316,29 @@ ucastlegend.onAdd = function (map) {
   return div;
 };
 
+
+var podpisylegend = L.control({position: 'bottomleft'});
+
+podpisylegend.onAdd = function (map) {
+
+  var div = L.DomUtil.create('div', 'info legend podpisylegend'),
+    grades = [0, 2, 4, 6, 8, 10, 12, 15, 20, 100],
+    labels = [],
+    from, to;
+
+  for (var i = 0; i < grades.length; i++) {
+    from = grades[i];
+    to = grades[i + 1];
+
+    labels.push(
+      '<i style="background:' + getPodpisyColor((from + 1) / 100) + '"></i> ' +
+      from + (to ? '&ndash;' + to : '+') + ' %');
+  }
+
+  div.innerHTML = '<h4>Sebraných podpisů z <em>oprávněných voličů</em></h4>' + labels.join('<br>');
+  return div;
+};
+
 // ucastlegend.addTo(map);
 
 var partylegend = L.control({position: 'bottomleft'});
@@ -319,19 +366,22 @@ currentlegend.addTo(map);
 
 var topStyles = {
   "Vítězové" : "winners",
-  "Účast" : "ucast"
+  "Účast" : "ucast",
+  "Podpisy": "podpisy",
 };
 
 var bottomStyles = {};
 
 var styleFunctions = {
   "winners" : styleWinner,
-  "ucast" : styleUcast
+  "ucast" : styleUcast,
+  "podpisy": stylePodpisy,
 };
 
 var styleLegends = {
   "winners" : partylegend,
-  "ucast" : ucastlegend
+  "ucast" : ucastlegend,
+  "podpisy": podpisylegend,
 };
 
 
